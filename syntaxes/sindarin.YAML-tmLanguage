@@ -1,0 +1,428 @@
+# [PackageDev] target_format: plist, ext: tmLanguage
+---
+name: Sindarin
+scopeName: source.sindarin
+fileTypes: [".si"]
+
+patterns:
+- include: '#statements'
+
+repository:
+  statements:
+    patterns:
+    - include: '#comment'
+    - include: '#import'
+    - include: '#export'
+    - include: '#declaration'
+    - include: '#raw-identifier-call'
+#-----Comment-----
+  comment:
+    patterns:
+    - include: '#single-line-comment'
+    - include: '#multi-line-comment'
+  single-line-comment:
+    name: comment.line.double-slash
+    match: '(//).*$\n?'
+  multi-line-comment:
+    name: comment.block
+    begin: '(\/\*)'
+    end: '(\*\/)'
+#-----Import/Export-----
+  import:
+    name: meta.import
+    begin: '((from)\s(\")(.*)(\")\s)?(import)(?=\s(\{|[$[:lower:]]))'
+    beginCaptures:
+      '2': { name: keyword.other.from }
+      '3': { name: string.quoted }
+      '4': { name: string.quoted.double }
+      '5': { name: string.quoted }
+      '6': { name: keyword.other.import }
+    patterns:
+    - include: '#module'
+    - include: '#modules'
+    end: '(\;)'
+    endCaptures:
+      '1': { name: punctuation.semi }
+  export:
+    begin: '(export)(?=\s(\{|[$[:lower:]]))'
+    name: meta.export
+    beginCaptures:
+      '1': { name: keyword.other.export }
+    patterns:
+      - include: '#module'
+      - include: '#modules'
+    end: '(\;)'
+    endCaptures:
+      '1': { name: punctuation.semi }
+  module:
+    name: meta.module
+    begin: '\s([$[:lower:]][$[:alnum:]]*)'
+    beginCaptures:
+      '1': { name: constant.other.identifier }
+    patterns:
+    - include: '#accessor'
+    end: '(?=(\,\s\{)|\;)'
+  modules:
+    name: meta.modules
+    begin: '\s(\{)(?=\s)'
+    beginCaptures:
+      '1': { name: punctuation.open_brace }
+    patterns:
+    - include: '#module-identifier'
+    end: '(\})(?=\;)'
+    endCaptures:
+      '1': { name: punctuation.close_brace }
+  module-identifier:
+    name: meta.identifier
+    begin: '\s([$[:lower:]][$[:alnum:]]*)(?=\.|\,|\n|(\s\}\;))'
+    beginCaptures:
+      '1': { name: constant.other.identifier }
+    patterns:
+    - include: '#accessor'
+    end: '(?=(\,)|\n|(\s\}\;))'
+  accessor:
+    name: meta.accessor
+    begin: '(\.)'
+    beginCaptures:
+      '1': { name: punctuation.accessor }
+    patterns:
+      - include: '#accessor-identifier'
+      - include: '#accessor-wildcard'
+    end: '(?=\,|\;|\n|(\s\}\;))'
+  accessor-identifier:
+    name: constant.other.identifier
+    match: ([$[:lower:]][$[:alnum:]]*|[0-9]+)(?=\.|\,|\;|\n|(\s\}\;))
+  accessor-wildcard:
+    name: keyword.operator.wildcard
+    match: '(\*)(?=\,|\;|\n|(\s\}\;))'
+#-----Declaration-----
+  declaration:
+    patterns:
+    - include: '#type-declaration'
+    - include: '#value-declaration'
+  type-declaration:
+    name: meta.declaration.type
+    begin: '([$[:upper:]][$[:alnum:]]*)(\:)\s'
+    beginCaptures:
+      '1': { name: entity.name.type }
+      '2': { name: punctuation.separator.colon }
+    end: '(\;)'
+    endCaptures:
+      '1': { name: punctuation.semi }
+  value-declaration:
+    name: meta.value-declaration
+    patterns:
+    - include: '#constant-declaration'
+    - include: '#mutable-declaration'
+  constant-declaration:
+    name: meta.declaration.constant
+    begin: '([$[:lower:]][$[:alnum:]]*)(\:\s)?([$[:upper:]][$[:alnum:]]*)?\s(\=)\s'
+    beginCaptures:
+      '1': { name: constant.other.identifier }
+      '2': { name: punctuation.separator.colon }
+      '3': { name: entity.name.type }
+      '4': { name: keyword.operator.assignment.constant }
+    patterns:
+    - include: '#expression'
+    end: '(\;)'
+    endCaptures:
+      '1': { name: punctuation.semi }
+  mutable-declaration:
+    name: meta.declaration.mutable
+    begin: '([$[:lower:]][$[:alnum:]]*)(\:\s)?([$[:upper:]][$[:alnum:]]*)?\s(\~)\s'
+    beginCaptures:
+      '1': { name: constant.other.identifier }
+      '2': { name: punctuation.separator.colon }
+      '3': { name: entity.name.type }
+      '4': { name: keyword.operator.assignment.mutable }
+    patterns:
+    - include: '#expression'
+    end: '(\;)'
+    endCaptures:
+      '1': { name: punctuation.semi }
+  raw-identifier-call:
+    name: meta.identifier.call
+    begin: '([$[:lower:]][$[:alnum:]|\.]*)(\()' # TODO - accessors
+    beginCaptures:
+      '1': { name: entity.name.function }
+      '2': { name: punctuation.open_round }
+    patterns:
+    - include: '#arguments'
+    end: '(\))(\;)'
+    endCaptures:
+      '1': { name: punctuation.close_round }
+      '2': { name: punctuation.semi }
+#-----Expression-----
+  expression:
+    name: meta.expression
+    begin: '(?=[^\,\;\]\}\)])'
+    patterns:
+    - include: '#identifier-call'
+    - include: '#block'
+    - include: '#array'
+    - include: '#tuple'
+    - include: '#string'
+    - include: '#constant'
+    - include: '#identifier'
+    - include: '#number'
+    - include: '#operator'
+    end: '(\,)|(\s)|(?=(\;|\]|\}|\)))'
+    endCaptures:
+      '1': { name: punctuation.comma }
+#-----Identifier-----
+  identifier-call:
+    name: meta.identifier.call
+    begin: '([$[:lower:]][$[:alnum:]|\.]*)(\()' # TODO - accessors
+    beginCaptures:
+      '1': { name: entity.name.function }
+      '2': { name: punctuation.open_round }
+    patterns:
+    - include: '#arguments'
+    end: '(\))'
+    endCaptures:
+      '1': { name: punctuation.close_round }
+  identifier:
+    name: constant.other.identifier
+    match: '([$[:lower:]][$[:alnum:]]*)'        # TODO - accessors
+#-----Function-----
+  parameters:
+    name: meta.function-parameters
+    patterns:
+    - include: '#listed-value-declaration'
+  arguments:
+    name: meta.function-arguments
+    patterns:
+    - include: '#expression'
+  function-body-statement:
+    name: meta.function-body-statement
+    patterns:
+    - include: '#declaration'
+    - include: '#raw-identifier-call'
+    - include: '#function-return'
+  function-return:
+    name: meta.return-statement
+    begin: '(return)'
+    beginCaptures:
+      '1': { name: keyword.other.return }
+    patterns:
+    - include: '#expression'
+    end: '(\;)'
+    endCaptures:
+      '1': { name: punctuation.semi }
+#-----Array-----
+  array:
+    name: meta.array
+    begin: '(\[)'
+    beginCaptures:
+      '1': { name: punctuation.open_square }
+    patterns:
+    - include: '#expression'
+    end: '(\])'
+    endCaptures:
+      '1': { name: punctuation.close_square }
+#-----Struct, Function Body-----
+  block:
+    name: meta.block
+    begin: '(\{)'
+    beginCaptures:
+      '1': { name: punctuation.open_curly }
+    patterns:
+    - include: '#function-body-statement'
+    - include: '#listed-value-declaration'
+    end: '(\})'
+    endCaptures:
+      '1': { name: punctuation.close_curly }
+  listed-value-declaration:
+    name: meta.value-declaration
+    patterns:
+    - include: '#listed-constant-declaration'
+    - include: '#listed-mutable-declaration'
+    - include: '#listed-undefined-declaration'
+  listed-constant-declaration:
+    name: meta.declaration.constant
+    begin: '([$[:lower:]][$[:alnum:]]*)(\:\s)?([$[:upper:]][$[:alnum:]]*)?\s(\=)\s'
+    beginCaptures:
+      '1': { name: constant.other.identifier }
+      '2': { name: punctuation.separator.colon }
+      '3': { name: entity.name.type }
+      '4': { name: keyword.operator.assignment.constant }
+    patterns:
+    - include: '#expression'
+    end: '(\,)|(?=\}|\))'
+    endCaptures:
+      '1': { name: punctuation.comma }
+  listed-mutable-declaration:
+    name: meta.declaration.mutable
+    begin: '([$[:lower:]][$[:alnum:]]*)(\:\s)?([$[:upper:]][$[:alnum:]]*)?\s(\~)\s'
+    beginCaptures:
+      '1': { name: constant.other.identifier }
+      '2': { name: punctuation.separator.colon }
+      '3': { name: entity.name.type }
+      '4': { name: keyword.operator.assignment.mutable }
+    patterns:
+    - include: '#expression'
+    end: '(\,)|(?=\}|\))'
+    endCaptures:
+      '1': { name: punctuation.comma }
+  listed-undefined-declaration:
+    name: meta.declaration.undefined
+    begin: '([$[:lower:]][$[:alnum:]]*)(\:\s)?([$[:upper:]][$[:alnum:]]*)?(?=\,|\))'
+    beginCaptures:
+      '1': { name: constant.other.identifier }
+      '2': { name: punctuation.separator.colon }
+      '3': { name: entity.name.type }
+    end: '(\,)|(?=\}|\))'
+    endCaptures:
+      '1': { name: punctuation.comma }
+#-----Tuple-----
+  tuple:
+    name: meta.tuple
+    begin: '(\()'
+    beginCaptures:
+      '1': { name: punctuation.open_round }
+    patterns:
+    - include: '#parameters'
+    - include: '#expression'
+    end: '(\))'
+    endCaptures:
+      '1': { name: punctuation.close_round }
+#-----Operations-----
+  operator:
+    name: meta.operator
+    patterns:
+    - include: '#destructor'
+    - include: '#equals'
+    - include: '#not-equals'
+    - include: '#less-than-equals'
+    - include: '#greater-than-equals'
+    - include: '#logical-and'
+    - include: '#logical-or'
+    - include: '#default'
+    - include: '#arrow'
+    - include: '#forward'
+    - include: '#backward'
+    - include: '#logical-not'
+    - include: '#add'
+    - include: '#subtract'
+    - include: '#multiply'
+    - include: '#divide'
+    - include: '#modulus'
+    - include: '#exponent'
+    - include: '#conditional'
+    - include: '#less-than'
+    - include: '#greater-than'
+    - include: '#bitwise-and'
+    - include: '#bitwise-or'
+  destructor:
+    match: '(\.\.\.)'
+    name: keyword.operator.destruct
+  equals:
+    match: '(\=\=)'
+    name: keyword.operator.comparison.equals
+  not-equals:
+    match: '(\!\=)'
+    name: keyword.operator.comparison.not_equals
+  less-than-equals:
+    match: '(\<\=)'
+    name: keyword.operator.comparison.less_than_equals
+  greater-than-equals:
+    match: '(\>\=)'
+    name: keyword.operator.comparison.greater_than_equals
+  logical-and:
+    match: '(\&\&)'
+    name: keyword.operator.logical.and
+  logical-or:
+    match: '(\|\|)'
+    name: keyword.operator.logical.or
+  default:
+    match: '(\?\?)'
+    name: keyword.operator.default
+  arrow:
+    match: '(\=\>)'
+    name: keyword.operator.arrow
+  forward:
+    match: '(\-\>)'
+    name: keyword.operator.forward
+  backward:
+    match: '(\<\-)'
+    name: keyword.operator.backward
+  logical-not:
+    match: '(\!)'
+    name: keyword.operator.logical.not
+  add:
+    match: '(\+)'
+    name: keyword.operator.arithmetic.add
+  subtract:
+    match: '(\-)'
+    name: keyword.operator.arithmetic.subtract
+  multiply:
+    match: '(\*)'
+    name: keyword.operator.arithmetic.multiply
+  divide:
+    match: '(\/)'
+    name: keyword.operator.arithmetic.divide
+  modulus:
+    match: '(\%)'
+    name: keyword.operator.arithmetic.modulus
+  exponent:
+    match: '(\^)'
+    name: keyword.operator.arithmetic.exponent
+  conditional:
+    match: '(\?)'
+    name: keyword.operator.conditional
+  less-than:
+    match: '(\<)'
+    name: keyword.operator.comparison.less_than
+  greater-than:
+    match: '(\>)'
+    name: keyword.operator.comparison.greater_than
+  bitwise-and:
+    match: '(\&)'
+    name: keyword.operator.bitwise.and
+  bitwise-or:
+    match: '(\|)'
+    name: keyword.operator.bitwise.or
+#-----Primitives-----
+  string:
+    name: string.quoted
+    begin: '(\")'
+    contentName: string.quoted.double
+    patterns:
+    - include: '#escape-characters'
+    end: '(\")'
+  escape-characters:
+    match: '\\[nrt\\\"]'
+    name: constant.character.escape
+  number:
+    name: meta.number
+    patterns:
+    - include: '#integer'
+    - include: '#float'
+    - include: '#infinity'
+  constant:
+    patterns:
+    - include: '#boolean'
+    - include: '#undefined'
+  boolean:
+    name: meta.boolean
+    patterns:
+    - include: '#true'
+    - include: '#false'
+  true:
+    match: '(true)'
+    name: constant.language.true
+  false:
+    match: '(false)'
+    name: constant.language.false
+  undefined:
+    match: '(undefined)'
+    name: constant.language.undefined
+  infinity:
+    match: '(infinity)'
+    name: constant.language.infinity
+  integer:
+    match: '(?:\b[0-9][0-9_]*(n)?\b(?!\.))'
+    name: constant.numeric.integer
+  float:
+    match: '(?:\b[0-9][0-9_]*(\.)[0-9][0-9_]*(n)?\b)'
+    name: constant.numeric.float

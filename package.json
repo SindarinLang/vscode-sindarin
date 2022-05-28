@@ -1,0 +1,55 @@
+{
+	"name": "vscode-sindarin",
+	"displayName": "Sindarin",
+	"description": "Support for Sindarin file syntax",
+	"version": "0.1.0",
+	"license": "MIT",
+	"engines": {
+		"vscode": "^1.5.1"
+	},
+	"keywords": [
+		"sindarin"
+	],
+	"galleryBanner": {
+		"color": "#3E1661",
+		"theme": "dark"
+	},
+	"scripts": {
+		"build": "bob build && node ./build/index.js"
+	},
+	"devDependencies": {
+		"@bconnorwhite/bob": "^2.9.4",
+		"@types/js-yaml": "^4.0.1",
+		"@types/plist": "^3.0.2",
+		"js-yaml": "^4.1.0",
+		"plist": "^3.0.2",
+		"vscode-oniguruma": "^1.5.1",
+		"vscode-textmate": "^5.4.0"
+	},
+	"categories": [
+		"Programming Languages"
+	],
+	"contributes": {
+		"languages": [
+			{
+				"id": "sindarin",
+				"aliases": [
+					"Sindarin",
+					"sindarin"
+				],
+				"extensions": [
+					".si"
+				],
+				"configuration": "./language-configuration.json"
+			}
+		],
+		"grammars": [
+			{
+				"language": "sindarin",
+				"scopeName": "source.sindarin",
+				"path": "./syntaxes/sindarin.tmLanguage"
+			}
+		]
+	},
+	"dependencies": {}
+}
